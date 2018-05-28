@@ -9,6 +9,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.ServletConfig;
 
 /**
@@ -58,10 +59,19 @@ public class LoginServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
+		HttpSession sesion = request.getSession();
+		String pagina = LOGIN_JSP;
+		boolean autenticado;
+		
+		if (sesion.getAttribute("autenticado") != null) {
+			autenticado = (boolean) sesion.getAttribute("autenticado");
+		}
+		else{
+			autenticado = false;	
+		}
+		
 		String nombre = request.getParameter("nombre").toLowerCase();
 		String password = request.getParameter("clave");
-
-		String pagina = "";
 
 		if (listausuarios.contains(nombre) || password.equals("1234")) {
 
@@ -72,6 +82,10 @@ public class LoginServlet extends HttpServlet {
 		} else {
 			pagina = ERROR_JSP;
 
+		}
+		if (autenticado) {
+			pagina = LISTADO_JSP;
+					
 		}
 		config.getServletContext().getRequestDispatcher(pagina).forward(request, response);
 
