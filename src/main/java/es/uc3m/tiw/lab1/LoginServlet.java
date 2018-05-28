@@ -73,7 +73,7 @@ public class LoginServlet extends HttpServlet {
 		String nombre = request.getParameter("nombre").toLowerCase();
 		String password = request.getParameter("clave");
 
-		if (listausuarios.contains(nombre) || password.equals("1234")) {
+		if (listausuarios.contains(nombre) && password.equals("1234")) {
 
 			pagina = LISTADO_JSP;
 			request.setAttribute("usuarios", listausuarios);
