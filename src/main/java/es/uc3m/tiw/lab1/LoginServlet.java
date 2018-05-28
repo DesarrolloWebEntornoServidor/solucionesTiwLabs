@@ -1,6 +1,8 @@
 package es.uc3m.tiw.lab1;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -19,11 +21,18 @@ public class LoginServlet extends HttpServlet {
 	private static final String LISTADO_JSP = "/listado.jsp";
 	private static final String ERROR_JSP = "/error.jsp";
 	private ServletConfig config;
+	private List<String> listausuarios;
+
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 	    super.init(config);
 	    this.config = config;
+	    listausuarios = new ArrayList<>();
+		listausuarios.add("carlos");
+		listausuarios.add("eva");
+		listausuarios.add("marta");
+		listausuarios.add("oscar");
 	}
 	
 	/**
@@ -49,14 +58,16 @@ public class LoginServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		String nombre = request.getParameter("nombre");
+		String nombre = request.getParameter("nombre").toLowerCase();
 		String password = request.getParameter("clave");
 
 		String pagina = "";
 
-		if (nombre.equals("usuario1") || password.equals("password1")) {
+		if (listausuarios.contains(nombre) || password.equals("1234")) {
 
 			pagina = LISTADO_JSP;
+			request.setAttribute("usuarios", listausuarios);
+			
 
 		} else {
 			pagina = ERROR_JSP;
