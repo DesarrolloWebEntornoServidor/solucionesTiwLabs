@@ -1,19 +1,35 @@
 package es.uc3m.tiw.lab2.modelo;
+import static javax.persistence.GenerationType.AUTO;
 
 import java.io.Serializable;
 
-public class Usuario implements Serializable {
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
+@Entity
+@Table(name="USUARIOS")
+public class Usuario implements Serializable{
+	
 	private static final long serialVersionUID = 1L;
+	@Id
+	@GeneratedValue(strategy = AUTO)
 	private int id;
+	@Column(nullable = false, length = 15)
 	private String nombre;
+	@Column(length = 30)
 	private String apellidos;
+	@Column(nullable = false, length = 10, unique = true)
 	private String usuario;
+	@Column(nullable = false)
 	private String password;
 	
 	public Usuario() {
 		this("","","","");
 	}
+	
 	public Usuario(String nombre, String apellidos, String usuario,
 			String password) {
 		super();
@@ -22,11 +38,13 @@ public class Usuario implements Serializable {
 		this.usuario = usuario;
 		this.password = password;
 	}
+	
 	public Usuario(String usuario, String password) {
 		super();
 		this.usuario = usuario;
 		this.password = password;
 	}
+	
 	public String getNombre() {
 		return nombre;
 	}
@@ -51,6 +69,7 @@ public class Usuario implements Serializable {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+	
 	/**
 	 * @return the id
 	 */

@@ -1,10 +1,9 @@
 package es.uc3m.tiw.lab2.dao;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.ResourceBundle;
 
+import java.util.Collection;
+import javax.persistence.EntityManager;
+import javax.transaction.UserTransaction;
 import es.uc3m.tiw.lab2.modelo.Usuario;
 
 
@@ -25,7 +24,9 @@ public interface UsuarioDAO {
 
 	public abstract Collection<Usuario> listarUsuarios()  ;
 
-	public abstract void setConexion(Connection con);
-
-	public abstract void setQuerys(ResourceBundle rb);
+	
+	public void setConexion(EntityManager em);
+	
+	public void setTransaction(UserTransaction ut);
+	
 }

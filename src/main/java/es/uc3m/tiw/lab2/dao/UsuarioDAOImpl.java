@@ -1,76 +1,34 @@
 package es.uc3m.tiw.lab2.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
+
 import java.util.Collection;
-import java.util.List;
-import java.util.ResourceBundle;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.Transactional;
+import javax.transaction.UserTransaction;
 
 import es.uc3m.tiw.lab2.modelo.Usuario;
 
 public class UsuarioDAOImpl implements UsuarioDAO {
 
-	private Connection con;
-	private ResourceBundle rb;
-
-	
-	public UsuarioDAOImpl(Connection con, ResourceBundle rb) {
-		super();
-		this.con = con;
-		this.rb = rb;
-		crearTablaUsuario();
-		
-	}
+	private EntityManager em;
+	private UserTransaction ut;
 
 	@Override
 	public Collection<Usuario> listarUsuarios() {
-		List<Usuario> listaUsuarios = new ArrayList<Usuario>();
-		System.out.println("$$$$$$ COMPROBANDO USUARIOS");
 
-		try (Statement st = con.createStatement()) {
-			ResultSet resultados = st.executeQuery(rb.getString("seleccionarTodosUsuarios"));
-
-			Usuario usuario;
-			while (resultados.next()) {
-				usuario = new Usuario();
-				usuario.setId(resultados.getInt("id"));
-				usuario.setNombre(resultados.getString("nombre"));
-				usuario.setApellidos(resultados.getString("apellidos"));
-				usuario.setUsuario(resultados.getString("usuario"));
-				usuario.setPassword(resultados.getString("passwd"));
-				listaUsuarios.add(usuario);
-				System.out.println("$$$$$$"+usuario.getNombre());
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return listaUsuarios;
+		return em.createQuery("select u from Usuario u", Usuario.class).getResultList();
 	}
 
 	@Override
 	public Usuario recuperarUnUsuarioPorClave(int pk) {
-		Usuario usuario = new Usuario();
+		return em.find(Usuario.class, pk);
 
-		try (PreparedStatement ps = con.prepareStatement(rb.getString("seleccionarUsuarioPK"))) {
-			ps.setInt(1, pk);
-			ResultSet resultados = ps.executeQuery();
-			while (resultados.next()) {
-				usuario = new Usuario();
-				usuario.setId(resultados.getInt("id"));
-				usuario.setNombre(resultados.getString("nombre"));
-				usuario.setApellidos(resultados.getString("apellidos"));
-				usuario.setUsuario(resultados.getString("usuario"));
-				usuario.setPassword(resultados.getString("passwd"));
-
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return usuario;
 	}
 
 	@Override
@@ -79,90 +37,107 @@ public class UsuarioDAOImpl implements UsuarioDAO {
 	 * usuario en caso de existir
 	 */
 	public Usuario recuperarUnUsuarioPorNombre(String nombre) {
-		Usuario usuario = new Usuario();
-
-		try (PreparedStatement ps = con.prepareStatement(rb.getString("seleccionarUsuarioNombre"))) {
-			ps.setString(1, nombre);
-			ResultSet resultados = ps.executeQuery();
-			while (resultados.next()) {
-				usuario.setId(resultados.getInt("id"));
-				usuario.setNombre(resultados.getString("nombre"));
-				usuario.setApellidos(resultados.getString("apellidos"));
-				usuario.setUsuario(resultados.getString("usuario"));
-				usuario.setPassword(resultados.getString("passwd"));
-
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return usuario;
+		Query consulta = em.createQuery("select u from Usuario u where u.usuario=:nom", Usuario.class);
+		consulta.setParameter("nom", nombre);
+		return (Usuario) consulta.getResultList().get(0);
 	}
 
 	@Override
 	public void crearTablaUsuario() {
 
-		try (Statement stmt = con.createStatement()){
-			stmt.executeUpdate(rb.getString("crearTablaUsuario"));
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+		//
 
 
 	}
 	
+	@Transactional
 	@Override
-	public Usuario crearUsuario(Usuario nuevoUsuario){
-		try(PreparedStatement ps = 
-				con.prepareStatement(rb.getString("crearUsuario"))){
-		ps.setString(1, nuevoUsuario.getNombre());
-		ps.setString(2, nuevoUsuario.getApellidos());
-		ps.setString(3, nuevoUsuario.getUsuario());
-		ps.setString(4, nuevoUsuario.getPassword());
-		ps.execute();
-		} catch (SQLException e) {
+	public Usuario crearUsuario(Usuario nuevoUsuario) {
+		try {
+			ut.begin();
+			em.persist(nuevoUsuario);
+			ut.commit();
+			em.flush();
+		} catch (NotSupportedException e) {
+			e.printStackTrace();
+		} catch (SystemException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalStateException e) {
+			e.printStackTrace();
+		} catch (RollbackException e) {
+			e.printStackTrace();
+		} catch (HeuristicMixedException e) {
+			e.printStackTrace();
+		} catch (HeuristicRollbackException e) {
 			e.printStackTrace();
 		}
-		return recuperarUnUsuarioPorNombre(nuevoUsuario.getNombre());
+		
+		return recuperarUnUsuarioPorNombre(nuevoUsuario.getUsuario());
 	}
 
 	@Override
 	public void borrarUsuario(Usuario usuario)     {
-		try(PreparedStatement ps = con.prepareStatement(rb.getString("borrarUsuario"))){
-		ps.setInt(1, usuario.getId());
-		ps.execute();
-		} catch (SQLException e) {
-			e.printStackTrace();
+		try {
+			ut.begin();
+			em.remove(em.merge(usuario));
+			
+			ut.commit();
+		} catch (NotSupportedException e) {
+ 			e.printStackTrace();
+		} catch (SystemException e) {
+ 			e.printStackTrace();
+		} catch (SecurityException e) {
+ 			e.printStackTrace();
+		} catch (IllegalStateException e) {
+ 			e.printStackTrace();
+		} catch (RollbackException e) {
+ 			e.printStackTrace();
+		} catch (HeuristicMixedException e) {
+ 			e.printStackTrace();
+		} catch (HeuristicRollbackException e) {
+ 			e.printStackTrace();
 		}
+		
+		
 
 	}
 
 	@Override
 	public Usuario actualizarUsuario(Usuario usuario)   {
-		Usuario usuarioActualizado = new Usuario();
-
-		try(PreparedStatement ps = con.prepareStatement(rb.getString("actualizarUsuario"))){
-		ps.setString(1, usuario.getNombre());
-		ps.setString(2, usuario.getPassword());
-		ps.setInt(3, usuario.getId());
-		ps.execute();
-		usuarioActualizado = recuperarUnUsuarioPorClave(usuario.getId());
-		} catch (SQLException e) {
-			e.printStackTrace();
+		try{
+		ut.begin();
+		em.merge(usuario);
+		ut.commit();
+		} catch (NotSupportedException e) {
+ 			e.printStackTrace();
+		} catch (SystemException e) {
+ 			e.printStackTrace();
+		} catch (SecurityException e) {
+ 			e.printStackTrace();
+		} catch (IllegalStateException e) {
+ 			e.printStackTrace();
+		} catch (RollbackException e) {
+ 			e.printStackTrace();
+		} catch (HeuristicMixedException e) {
+ 			e.printStackTrace();
+		} catch (HeuristicRollbackException e) {
+ 			e.printStackTrace();
 		}
-		return usuarioActualizado;
+		return recuperarUnUsuarioPorClave(usuario.getId());
+
 
 	}
 
 	@Override
-	public void setConexion(Connection con) {
-		this.con = con;
-
+	public void setConexion(EntityManager em) {
+		this.em = em;
+		
 	}
-
 	@Override
-	public void setQuerys(ResourceBundle rb) {
-		this.rb = rb;
-
+	public void setTransaction(UserTransaction ut){
+		this.ut = ut;
 	}
 
 }

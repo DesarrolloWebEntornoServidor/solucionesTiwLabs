@@ -1,12 +1,14 @@
 package es.uc3m.tiw.lab2;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 
+import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebInitParam;
@@ -15,11 +17,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 
-import es.uc3m.tiw.lab2.modelo.Usuario;
-import es.uc3m.tiw.lab2.Conector;
 import es.uc3m.tiw.lab2.dao.UsuarioDAO;
 import es.uc3m.tiw.lab2.dao.UsuarioDAOImpl;
+import es.uc3m.tiw.lab2.modelo.Usuario;
 
 //@WebServlet(urlPatterns = "/loginJDBC")
 @WebServlet(urlPatterns = "/loginJDBC", loadOnStartup = 1, initParams = {
@@ -31,27 +38,51 @@ public class LoginJDBC extends HttpServlet {
 	private static final String LISTADO_JSP = "/listado.jsp";
 	// private static final String ERROR_JSP = "/error.jsp";
 	private static final long serialVersionUID = 1L;
-	// private ServletConfig config;
 	// private Usuario usuario;
-	private ArrayList<Usuario> usuarios;
+	private List<Usuario> usuarios;
 	private UsuarioDAO dao;
+	@PersistenceContext(unitName="laboratoriosPU")
+	private EntityManager em;
+	@Resource
+	UserTransaction ut;
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		// this.config = config;
-		String configuracion = getInitParameter("configuracion");
+		// creamos unos usuarios de prueba al inicio para que no falle dao.listarUsuarios();
+		Usuario u1 = new Usuario("Juan", "Sanz", "jsanz", "123456");
+		Usuario u2 = new Usuario("Ana", "Alba", "aalba", "123456");
+		Usuario u3 = new Usuario("Benito", "Bueno", "bbueno", "123456");
+		Usuario u4 = new Usuario("Carlos", "Tessier", "tessier", "123456");
+		try {
+			ut.begin();
+			em.persist(u1);
+			em.persist(u2);
+			em.persist(u3);
+			em.persist(u4);
+			
+			ut.commit();
 
-		ResourceBundle rb = ResourceBundle.getBundle(configuracion);
-
-		Conector conector = Conector.getInstance();
-		Connection con = conector.crearConexionMySQL(rb);
-
-		// Connection con = conector.crearConexionMySQLConJNDI(rb);
-		dao = new UsuarioDAOImpl(con, rb);
-
-		usuarios = (ArrayList<Usuario>) dao.listarUsuarios();
-
+		} catch (SecurityException e1) {
+			e1.printStackTrace();
+		} catch (IllegalStateException e1) {
+			e1.printStackTrace();
+		} catch (NotSupportedException e1) {
+			e1.printStackTrace();
+		} catch (SystemException e1) {
+			e1.printStackTrace();
+		} catch (RollbackException e1) {
+			e1.printStackTrace();
+		} catch (HeuristicMixedException e1) {
+			e1.printStackTrace();
+		} catch (HeuristicRollbackException e1) {
+			e1.printStackTrace();
+		}
+		
+		dao = new UsuarioDAOImpl(); 
+		dao.setConexion(em);
+		dao.setTransaction(ut);
+		
 	}
 
 	/**
@@ -92,8 +123,9 @@ public class LoginJDBC extends HttpServlet {
 		boolean autenticado = false;
 		pagina = LOGIN_JSP;
 		HttpSession sesion = request.getSession();
+		
+		usuarios = (List<Usuario>) dao.listarUsuarios();
 		Usuario u = comprobarUsuario(user, password);
-		usuarios = (ArrayList<Usuario>) dao.listarUsuarios();
 
 		Map<String, String> errores = new HashMap<String, String>();
 

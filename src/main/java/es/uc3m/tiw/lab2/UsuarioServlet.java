@@ -5,6 +5,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ResourceBundle;
 
+import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -14,11 +17,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.transaction.UserTransaction;
 
-import es.uc3m.tiw.lab2.modelo.Usuario;
-import es.uc3m.tiw.lab2.Conector;
 import es.uc3m.tiw.lab2.dao.UsuarioDAO;
 import es.uc3m.tiw.lab2.dao.UsuarioDAOImpl;
+import es.uc3m.tiw.lab2.modelo.Usuario;
 
 /**
  * Servlet implementation class UsuarioServlet
@@ -29,11 +32,13 @@ import es.uc3m.tiw.lab2.dao.UsuarioDAOImpl;
 
 public class UsuarioServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private ServletConfig config;
 	private UsuarioDAO dao;
 	private Connection con;
 	private static final String ALTA = "ALTA", EDITAR = "EDITAR", BORRAR = "BORRAR";
-
+	@PersistenceContext(unitName="laboratoriosPU")
+    EntityManager em;
+    @Resource
+    UserTransaction ut;
 	/**
 	 * @see Servlet#init(ServletConfig)
 	 */
@@ -41,13 +46,9 @@ public class UsuarioServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		//this.config = config;
-		String configuracion = getInitParameter("configuracion");
-
-		ResourceBundle rb = ResourceBundle.getBundle(configuracion);
-		Conector conector = Conector.getInstance();
-		con = conector.crearConexionMySQL(rb);
-		// Connection con = conector.crearConexionMySQLConJNDI(rb);
-		dao = new UsuarioDAOImpl(con, rb);
+		dao = new UsuarioDAOImpl();
+		dao.setConexion(em);
+		dao.setTransaction(ut);
 	}
 
 	/**
