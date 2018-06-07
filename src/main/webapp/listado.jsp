@@ -32,6 +32,8 @@
 		<tr>
 			<td>${usuario.nombre }</td> <!-- Usuario es un POJO por lo que podemos acceder a sus propiedades sin necesidad de get/set -->
 			<td>${usuario.apellidos }</td>
+			<td><a href="usuario?accion=editar&id=${usuario.id }">Editar</a> </td>
+			<td><a href="usuario?accion=borrar&id=${usuario.id }">Borrar</a></td>
 		</tr>
 		
 		</c:forEach>

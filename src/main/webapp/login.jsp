@@ -33,7 +33,7 @@
 		</c:forEach>
 	</c:if>
 	<h1>Formulario</h1>
-	<form action="login" method="post">
+	<form action="loginJDBC" method="post">
 		<fieldset>
 			<legend>Formulario de login</legend>
 			<label for="nom">Nombre:</label> 
@@ -45,5 +45,8 @@
 		<input type="submit" value="Enviar">
 
 	</form>
+	<a href="usuario?accion=ALTA">Alta usuario</a>
+	
+	
 </body>
 </html>
